@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hendy Video Studio VIP Pro - WebSocket Real-Time</title>
+    <title>Hendy Video Studio v3.5 - Hoàn Thiện Trang Chủ & Xác Thực</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -13,10 +13,12 @@
                 extend: {
                     colors: {
                         darkBg: '#090d16',
-                        sidebarBg: '#0f172a',
+                        sidebarBg: '#0d1322',
                         cardBg: '#131c31',
+                        cardHeader: '#1a2540',
                         accentBlue: '#3b82f6',
                         accentPurple: '#8b5cf6',
+                        neonPurple: '#a855f7',
                         neonCyan: '#06b6d4',
                         goldVip: '#f59e0b'
                     }
@@ -24,31 +26,96 @@
             }
         }
     </script>
-    <!-- Lucide Icons & Chart.js -->
+    <!-- Lucide Icons & FontAwesome -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js cho đồ thị thống kê -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        
         .banner-glow {
             background: linear-gradient(135deg, rgba(30, 27, 75, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%),
                         url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop');
             background-size: cover;
             background-position: center;
         }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
-<body class="bg-[#090d16] text-slate-100 min-h-screen flex antialiased selection:bg-blue-600 selection:text-white">
+<body class="bg-[#090d16] text-slate-100 min-h-screen flex antialiased selection:bg-blue-600 selection:text-white overflow-hidden">
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-3 pointer-events-none"></div>
+
+    <!-- MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ (AUTHENTICATION SCREEN) -->
+    <div id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-2xl">
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl"></div>
+            <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"></div>
+        </div>
+        <div class="relative bg-[#131c31] border border-slate-800 w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl backdrop-blur-2xl">
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 mx-auto flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <i data-lucide="play" class="w-6 h-6 text-white fill-white"></i>
+                </div>
+                <h2 id="authTitle" class="text-lg font-extrabold text-white tracking-tight">Đăng Nhập Hendy Studio v3.5</h2>
+                <p id="authSubtitle" class="text-xs text-slate-400">Không gian sáng tạo video AI đẳng cấp chuyên nghiệp</p>
+            </div>
+
+            <!-- Form Đăng Nhập -->
+            <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-300">Email hoặc Tên tài khoản:</label>
+                    <input type="text" id="loginEmail" required placeholder="vd: quanlinh@gmail.com" class="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl text-xs text-white mt-1.5 outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-300">Mật khẩu bảo mật:</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl text-xs text-white mt-1.5 outline-none focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-blue-600/30">
+                    Đăng Nhập Hệ Thống
+                </button>
+                <div class="text-center pt-2">
+                    <p class="text-xs text-slate-400">Chưa có tài khoản? <button type="button" onclick="toggleAuthMode('register')" class="text-blue-400 font-bold hover:underline">Đăng ký ngay</button></p>
+                </div>
+            </form>
+
+            <!-- Form Đăng Ký (Ẩn mặc định) -->
+            <form id="registerForm" onsubmit="handleRegisterSubmit(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="text-xs font-bold text-slate-300">Họ và tên:</label>
+                    <input type="text" id="regName" required placeholder="vd: Ngô Văn G" class="w-full bg-slate-950 border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-white mt-1 outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-300">Email đăng ký:</label>
+                    <input type="email" id="regEmail" required placeholder="vd: email@domain.com" class="w-full bg-slate-950 border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-white mt-1 outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-300">Mật khẩu mới:</label>
+                    <input type="password" id="regPassword" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-white mt-1 outline-none focus:border-blue-500">
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-purple-600/30">
+                    Đăng Ký & Kích Hoạt
+                </button>
+                <div class="text-center pt-2">
+                    <p class="text-xs text-slate-400">Đã có tài khoản? <button type="button" onclick="toggleAuthMode('login')" class="text-blue-400 font-bold hover:underline">Đăng nhập ngay</button></p>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- SIDEBAR BÊN TRÁI -->
-    <aside class="w-64 bg-[#0d1322] border-r border-slate-800/80 flex flex-col shrink-0">
-        <!-- Logo Header -->
+    <aside class="w-64 bg-[#0d1322] border-r border-slate-800/80 flex flex-col shrink-0 h-screen">
         <div class="p-5 flex items-center justify-between border-b border-slate-800/60">
-            <div class="flex items-center gap-2.5">
+            <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchNav('home')">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
                     <i data-lucide="play" class="w-5 h-5 text-white fill-white"></i>
                 </div>
@@ -58,344 +125,142 @@
                     </h1>
                 </div>
             </div>
-            <span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded text-[10px] font-extrabold uppercase">VIP Pro</span>
+            <span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded text-[10px] font-extrabold uppercase">v3.5 Pro</span>
         </div>
 
-        <!-- Navigation Links -->
-        <nav class="flex-1 p-4 space-y-6 overflow-y-auto">
+        <nav class="flex-1 p-4 space-y-6 overflow-y-auto" id="sidebar-nav">
             <div>
-                <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Studio</p>
+                <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Studio & Công Cụ Sáng Tạo</p>
                 <div class="space-y-1">
-                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                    <button onclick="switchNav('home')" data-nav="home" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30">
                         <i data-lucide="home" class="w-4 h-4"></i> Trang chủ
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Tạo video mới
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                    </button>
+                    <button onclick="switchNav('create-video')" data-nav="create-video" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-purple-400"></i> Tạo video AI mới
+                    </button>
+                    <button onclick="switchNav('tts')" data-nav="tts" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                        <i data-lucide="mic" class="w-4 h-4 text-emerald-400"></i> Chuyển giọng nói AI
+                    </button>
+                    <button onclick="switchNav('subtitles')" data-nav="subtitles" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                        <i data-lucide="subtitles" class="w-4 h-4 text-rose-400"></i> Phụ đề tự động
+                    </button>
+                    <button onclick="switchNav('editor')" data-nav="editor" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                        <i data-lucide="scissors" class="w-4 h-4 text-cyan-400"></i> Chỉnh sửa & Cắt ghép
+                    </button>
+                    <button onclick="switchNav('projects')" data-nav="projects" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
                         <i data-lucide="folder" class="w-4 h-4"></i> Dự án của tôi
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i> Công cụ AI
-                    </a>
-                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <i data-lucide="radio" class="w-4 h-4 text-cyan-400"></i> Luồng WebSocket
-                    </a>
+                    </button>
+                    <button onclick="switchNav('export')" data-nav="export" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                        <i data-lucide="share-2" class="w-4 h-4 text-orange-400"></i> Xuất & Chia sẻ 4K
+                    </button>
+                    <button onclick="switchNav('history')" data-nav="history" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                        <i data-lucide="history" class="w-4 h-4"></i> Lịch sử hoạt động
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Tài Khoản & Dịch Vụ</p>
+                <div class="space-y-1">
+                    <button onclick="switchNav('packages')" data-nav="packages" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                        <i data-lucide="package" class="w-4 h-4 text-amber-400"></i> Gói dịch vụ VIP
+                    </button>
                 </div>
             </div>
         </nav>
 
-        <!-- VIP Upgrade Banner -->
+        <!-- VIP Pro Nâng Cấp Card -->
         <div class="p-4 border-t border-slate-800/60">
-            <div class="bg-gradient-to-b from-amber-500/10 to-transparent border border-amber-500/20 rounded-2xl p-4 text-center space-y-3">
+            <div class="bg-gradient-to-b from-amber-500/10 to-transparent border border-amber-500/20 rounded-2xl p-4 text-center space-y-3 relative overflow-hidden">
                 <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
                     <i data-lucide="crown" class="w-4 h-4"></i>
                 </div>
                 <div>
                     <h4 class="text-xs font-extrabold text-white">Nâng cấp lên VIP Pro</h4>
-                    <p class="text-[11px] text-slate-400 mt-1">Trải nghiệm Render Realtime & WebSocket Server</p>
+                    <p class="text-[11px] text-slate-400 mt-1">Mở khóa toàn bộ GPU Render & Voice Clone.</p>
                 </div>
-                <button class="w-full py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 hover:brightness-110 transition">
-                    Nâng cấp ngay
+                <button onclick="switchNav('packages')" class="w-full py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 hover:brightness-110 transition">
+                    Nâng cấp ngay <i data-lucide="arrow-right" class="w-3.5 h-3.5 inline"></i>
                 </button>
             </div>
         </div>
     </aside>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <!-- TOP BAR VỚI TÍNH NĂNG WEBSOCKET MONITOR -->
-        <header class="h-16 border-b border-slate-800/80 px-8 flex items-center justify-between bg-[#090d16]/80 backdrop-blur-md sticky top-0 z-30">
-            <!-- Tìm kiếm & Trạng thái WebSocket -->
-            <div class="flex items-center gap-4">
-                <div class="relative w-80">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                    <input type="text" placeholder="Tìm kiếm dự án..." class="w-full bg-[#131c31] border border-slate-800 pl-10 pr-4 py-2 rounded-xl text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500">
-                </div>
-
-                <!-- WEBSOCKET LIVE INDICATOR -->
-                <div class="flex items-center gap-2 bg-[#131c31] border border-slate-800 px-3 py-1.5 rounded-xl font-mono text-[11px]">
-                    <span id="wsStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-                    <span id="wsStatusText" class="text-amber-400 font-semibold">WS: Connecting...</span>
-                </div>
+    <!-- KHU VỰC NỘI DUNG CHÍNH -->
+    <main class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+        <!-- HEADER TOP BAR -->
+        <header class="h-16 border-b border-slate-800/80 px-8 flex items-center justify-between bg-[#090d16]/90 backdrop-blur-md sticky top-0 z-30 shrink-0">
+            <div class="relative w-96">
+                <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" placeholder="Tìm kiếm nhanh dự án, công cụ..." class="w-full bg-[#131c31] border border-slate-800 pl-10 pr-16 py-2 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition">
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-500 bg-slate-800/60 px-1.5 py-0.5 rounded">Ctrl + K</span>
             </div>
 
-            <!-- Profile & Notifications -->
             <div class="flex items-center gap-4">
-                <button onclick="sendPingWS()" class="px-3 py-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                    <i data-lucide="send" class="w-3.5 h-3.5"></i> Send WS Ping
+                <button onclick="openAiChatModal()" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 rounded-xl text-xs font-bold hover:bg-indigo-600/30 transition">
+                    <i data-lucide="bot" class="w-4 h-4 text-indigo-400"></i> Trợ lý AI
                 </button>
+                <button onclick="showToast('Bạn không có thông báo mới', 'info')" class="relative p-2 text-slate-400 hover:text-white rounded-xl bg-[#131c31] border border-slate-800">
+                    <i data-lucide="bell" class="w-4 h-4"></i>
+                    <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500"></span>
+                </button>
+
+                <!-- Profile hiển thị thông tin user đang đăng nhập & Nút Đăng Xuất -->
                 <div class="flex items-center gap-3 pl-2 border-l border-slate-800">
-                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop" class="w-8 h-8 rounded-xl object-cover ring-2 ring-blue-500/30" alt="Avatar">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-xs text-white" id="userAvatarText">LG</div>
                     <div class="text-left hidden sm:block">
-                        <p class="text-xs font-bold text-white">QUANLINH</p>
-                        <span class="text-[10px] text-slate-400">Administrator</span>
+                        <p class="text-xs font-bold text-white leading-none" id="userNameDisplay">QUAN LINH</p>
+                        <span class="text-[10px] text-emerald-400">VIP Pro Active</span>
                     </div>
+                    <button onclick="handleLogout()" title="Đăng xuất" class="p-1.5 ml-2 bg-slate-800 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 rounded-xl transition">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
                 </div>
             </div>
         </header>
 
-        <!-- DASHBOARD CONTAINER -->
-        <div class="p-8 space-y-8">
+        <!-- TAB CONTENT CONTAINER -->
+        <div class="p-8 space-y-8 flex-1">
 
-            <!-- HERO BANNER -->
-            <div class="relative rounded-3xl overflow-hidden border border-slate-800/80 p-8 banner-glow flex flex-col justify-between min-h-[200px]">
-                <div class="relative z-10 max-w-2xl space-y-3">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold">
-                        <i data-lucide="crown" class="w-3.5 h-3.5"></i> Hendy Video Studio VIP Pro
-                    </div>
-                    <h2 class="text-3xl font-extrabold text-white tracking-tight">Sáng Tạo Video Đỉnh Cao</h2>
-                    <p class="text-xs text-slate-300">Kết nối Engine Real-Time qua WebSocket Protocol</p>
-                </div>
-            </div>
-
-            <!-- TÍNH NĂNG CHÍNH -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div class="bg-[#131c31] border border-slate-800/80 p-5 rounded-2xl hover:border-blue-500/40 transition cursor-pointer">
-                    <div class="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center mb-3">
-                        <i data-lucide="video" class="w-5 h-5"></i>
-                    </div>
-                    <h3 class="text-xs font-bold text-white">Tạo video AI</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Từ văn bản & media</p>
-                </div>
-                <div class="bg-[#131c31] border border-slate-800/80 p-5 rounded-2xl hover:border-blue-500/40 transition cursor-pointer">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center mb-3">
-                        <i data-lucide="mic" class="w-5 h-5"></i>
-                    </div>
-                    <h3 class="text-xs font-bold text-white">Chuyển giọng nói</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">AI Voice đa ngôn ngữ</p>
-                </div>
-                <div class="bg-[#131c31] border border-slate-800/80 p-5 rounded-2xl hover:border-blue-500/40 transition cursor-pointer">
-                    <div class="w-10 h-10 rounded-xl bg-rose-600/20 text-rose-400 flex items-center justify-center mb-3">
-                        <i data-lucide="subtitles" class="w-5 h-5"></i>
-                    </div>
-                    <h3 class="text-xs font-bold text-white">Phụ đề tự động</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Nhận diện & chỉnh sửa</p>
-                </div>
-                <div class="bg-[#131c31] border border-slate-800/80 p-5 rounded-2xl hover:border-blue-500/40 transition cursor-pointer">
-                    <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center mb-3">
-                        <i data-lucide="scissors" class="w-5 h-5"></i>
-                    </div>
-                    <h3 class="text-xs font-bold text-white">Công cụ chỉnh sửa</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">Cắt ghép & hiệu ứng</p>
-                </div>
-                <div class="bg-[#131c31] border border-slate-800/80 p-5 rounded-2xl hover:border-blue-500/40 transition cursor-pointer">
-                    <div class="w-10 h-10 rounded-xl bg-orange-600/20 text-orange-400 flex items-center justify-center mb-3">
-                        <i data-lucide="share-2" class="w-5 h-5"></i>
-                    </div>
-                    <h3 class="text-xs font-bold text-white">Xuất & Chia sẻ</h3>
-                    <p class="text-[11px] text-slate-400 mt-1">MP4 4K chất lượng cao</p>
-                </div>
-            </div>
-
-            <!-- GRID MAIN: THỐNG KÊ & WEBSOCKET LOG STREAM -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-                <!-- CỘT TRÁI: THỐNG KÊ & BIỂU ĐỒ (7 CỘT) -->
-                <div class="lg:col-span-7 space-y-6">
-                    <div class="bg-[#131c31] border border-slate-800/80 p-6 rounded-2xl space-y-6">
-                        <div class="flex items-center justify-between">
-                            <h3 class="font-extrabold text-white text-xs uppercase tracking-wider flex items-center gap-2">
-                                <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-400"></i> Thống kê nhanh
-                            </h3>
-                            <span class="text-[10px] text-emerald-400 font-mono">Live WebSocket Updating</span>
+            <!-- TAB 1: TRANG CHỦ HOÀN THIỆN -->
+            <section id="tab-home" class="tab-content active space-y-8">
+                <!-- HERO BANNER -->
+                <div class="relative rounded-3xl overflow-hidden border border-slate-800/80 p-8 banner-glow flex flex-col justify-between min-h-[240px]">
+                    <div class="relative z-10 max-w-2xl space-y-3">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold">
+                            <i data-lucide="crown" class="w-3.5 h-3.5"></i> Hendy Video Studio v3.5 Pro
                         </div>
-
-                        <!-- 4 Chỉ số KPI -->
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div class="bg-[#0b101d] border border-slate-800 p-3.5 rounded-xl">
-                                <p class="text-[10px] text-slate-400">Tổng dự án</p>
-                                <div class="text-xl font-extrabold text-white" id="statTotalProjects">48</div>
-                            </div>
-                            <div class="bg-[#0b101d] border border-slate-800 p-3.5 rounded-xl">
-                                <p class="text-[10px] text-slate-400">Video đã tạo</p>
-                                <div class="text-xl font-extrabold text-white" id="statCreatedVideos">36</div>
-                            </div>
-                            <div class="bg-[#0b101d] border border-slate-800 p-3.5 rounded-xl">
-                                <p class="text-[10px] text-slate-400">Thời gian AI</p>
-                                <div class="text-xl font-extrabold text-white">2.4 <span class="text-xs font-normal text-slate-400">giờ</span></div>
-                            </div>
-                            <div class="bg-[#0b101d] border border-slate-800 p-3.5 rounded-xl">
-                                <p class="text-[10px] text-slate-400">Dung lượng</p>
-                                <div class="text-xl font-extrabold text-white">8.2 <span class="text-xs font-normal text-slate-400">GB</span></div>
-                            </div>
+                        <h2 class="text-3xl font-extrabold text-white tracking-tight">Sáng Tạo Video Đỉnh Cao Cùng AI</h2>
+                        <p class="text-xs text-slate-300 flex items-center gap-2 font-medium">
+                            <span>Tự động hóa kịch bản</span> • <span>Lồng tiếng thông minh</span> • <span>Xuất bản 4K tốc độ cao</span>
+                        </p>
+                        <div class="pt-2 flex gap-3">
+                            <button onclick="switchNav('create-video')" class="px-6 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/25 transition flex items-center gap-2">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i> Tạo video mới ngay
+                            </button>
+                            <button onclick="switchNav('projects')" class="px-5 py-3 bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition">
+                                Quản lý dự án
+                            </button>
                         </div>
-
-                        <!-- Biểu đồ Chart.js -->
+                    </div>
+                    <div class="absolute top-6 right-6 bg-[#131c31]/90 border border-slate-700/60 p-4 rounded-2xl flex items-center gap-3 backdrop-blur-md">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
+                            <i data-lucide="crown" class="w-5 h-5"></i>
+                        </div>
                         <div>
-                            <div class="h-44 w-full">
-                                <canvas id="analyticsChart"></canvas>
-                            </div>
+                            <h4 class="text-xs font-extrabold text-white">Phiên bản v3.5 Pro</h4>
+                            <p class="text-[10px] text-slate-400">Đầy đủ tính năng • Không giới hạn</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- CỘT PHẢI: WEBSOCKET LIVE LOG STREAM & SYSTEM STATUS (5 CỘT) -->
-                <div class="lg:col-span-5 space-y-6">
-
-                    <!-- REAL-TIME LOG STREAM CARDS -->
-                    <div class="bg-[#131c31] border border-slate-800/80 p-5 rounded-2xl space-y-4">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <h3 class="font-extrabold text-white text-xs uppercase tracking-wider flex items-center gap-2">
-                                <i data-lucide="terminal" class="w-4 h-4 text-cyan-400"></i> WebSocket Live Stream
-                            </h3>
-                            <button onclick="clearWsLogs()" class="text-[10px] text-slate-400 hover:text-white">Xóa log</button>
-                        </div>
-
-                        <!-- Terminal Container -->
-                        <div id="wsLogTerminal" class="bg-[#070b12] p-3 rounded-xl border border-slate-800 font-mono text-[11px] text-emerald-400 h-52 overflow-y-auto space-y-1.5">
-                            <p class="text-slate-500">[SYSTEM] Khởi tạo môi trường lắng nghe WebSocket...</p>
-                        </div>
-                    </div>
-
-                    <!-- TÀI NGUYÊN HỆ THỐNG TRỰC TIẾP -->
-                    <div class="bg-[#131c31] border border-slate-800/80 p-4 rounded-2xl space-y-3">
-                        <h4 class="text-[11px] font-bold text-slate-400 uppercase">Tải máy chủ Realtime</h4>
-                        <div class="grid grid-cols-3 gap-2 text-center">
-                            <div class="p-2 bg-[#0b101d] rounded-xl border border-slate-800">
-                                <span class="text-[10px] text-slate-500 font-mono">CPU</span>
-                                <p class="text-sm font-extrabold text-blue-400 mt-0.5" id="valCpu">24%</p>
+                <!-- 5 CÔNG CỤ TẮT TRANG CHỦ -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div onclick="switchNav('create-video')" class="bg-[#131c31] border border-slate-800/80 p-5 rounded-2xl hover:border-blue-500/40 transition group cursor-pointer flex flex-col justify-between">
+                        <div class="space-y-3">
+                            <div class="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center group-hover:scale-110 transition">
+                                <i data-lucide="video" class="w-5 h-5"></i>
                             </div>
-                            <div class="p-2 bg-[#0b101d] rounded-xl border border-slate-800">
-                                <span class="text-[10px] text-slate-500 font-mono">RAM</span>
-                                <p class="text-sm font-extrabold text-purple-400 mt-0.5" id="valRam">68%</p>
-                            </div>
-                            <div class="p-2 bg-[#0b101d] rounded-xl border border-slate-800">
-                                <span class="text-[10px] text-slate-500 font-mono">Storage</span>
-                                <p class="text-sm font-extrabold text-emerald-400 mt-0.5">65%</p>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-    </main>
-
-    <!-- WEBSOCKET INTEGRATION ENGINE SCRIPT -->
-    <script>
-        lucide.createIcons();
-
-        // 1. CẤU HÌNH WEBSOCKET ENGINE
-        let ws;
-        // Sử dụng WebSocket echo công khai để demo (có thể thay thế bằng ws://localhost:8080 hoặc wss://domain-cua-ban.com)
-        const WS_URL = 'wss://echo.websocket.org'; 
-
-        function initWebSocket() {
-            const statusDot = document.getElementById('wsStatusDot');
-            const statusText = document.getElementById('wsStatusText');
-
-            statusText.innerText = 'WS: Connecting...';
-            statusText.className = 'text-amber-400 font-semibold';
-            statusDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse';
-
-            try {
-                ws = new WebSocket(WS_URL);
-
-                ws.onopen = () => {
-                    statusText.innerText = 'WS: Connected';
-                    statusText.className = 'text-emerald-400 font-semibold';
-                    statusDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/50';
-                    
-                    appendWsLog('[CONNECTED] Đã thiết lập kết nối WebSocket thành công.', 'text-emerald-400');
-                    
-                    // Gửi tin nhắn khởi tạo
-                    ws.send(JSON.stringify({ event: 'subscribe', channel: 'video_studio_events' }));
-                };
-
-                ws.onmessage = (event) => {
-                    const time = new Date().toLocaleTimeString();
-                    appendWsLog(`[${time}] [RECV] ${event.data}`, 'text-cyan-300');
-                    
-                    // Giả lập nhận dữ liệu realtime để cập nhật giao diện
-                    simulateDynamicMetrics();
-                };
-
-                ws.onerror = (error) => {
-                    appendWsLog('[ERROR] Lỗi kết nối WebSocket!', 'text-rose-400');
-                };
-
-                ws.onclose = () => {
-                    statusText.innerText = 'WS: Disconnected';
-                    statusText.className = 'text-rose-400 font-semibold';
-                    statusDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
-                    appendWsLog('[DISCONNECTED] Đã ngắt kết nối. Đang thử kết nối lại sau 3s...', 'text-amber-400');
-                    
-                    // Tự động kết nối lại sau 3 giây
-                    setTimeout(initWebSocket, 3000);
-                };
-            } catch (err) {
-                appendWsLog('[EXCEPTION] ' + err.message, 'text-rose-400');
-            }
-        }
-
-        // 2. GỬI PING QUA WEBSOCKET
-        function sendPingWS() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                const payload = JSON.stringify({ action: 'ping', timestamp: Date.now() });
-                ws.send(payload);
-                appendWsLog(`[SEND] ${payload}`, 'text-blue-400');
-            } else {
-                appendWsLog('[WARNING] WebSocket chưa sẵn sàng để gửi tin nhắn.', 'text-amber-400');
-            }
-        }
-
-        // 3. LOG TERMINAL HELPER
-        function appendWsLog(msg, colorClass = 'text-emerald-400') {
-            const terminal = document.getElementById('wsLogTerminal');
-            const p = document.createElement('p');
-            p.className = colorClass;
-            p.innerText = msg;
-            terminal.appendChild(p);
-            terminal.scrollTop = terminal.scrollHeight;
-        }
-
-        function clearWsLogs() {
-            document.getElementById('wsLogTerminal').innerHTML = '<p class="text-slate-500">[SYSTEM] Đã xóa nhật ký WebSocket.</p>';
-        }
-
-        // 4. CẬP NHẬT TỰ ĐỘNG CÁC CHỈ SỐ GIAO DIỆN
-        function simulateDynamicMetrics() {
-            const cpu = Math.floor(15 + Math.random() * 20);
-            const ram = Math.floor(60 + Math.random() * 15);
-            document.getElementById('valCpu').innerText = cpu + '%';
-            document.getElementById('valRam').innerText = ram + '%';
-        }
-
-        // 5. CHART.JS
-        const ctx = document.getElementById('analyticsChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['10/11', '11/11', '12/11', '13/11', '14/11', '15/11', '16/11'],
-                datasets: [
-                    {
-                        label: 'Video tạo mới',
-                        data: [12, 19, 15, 25, 22, 30, 28],
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } },
-                    y: { grid: { color: 'rgba(51, 65, 85, 0.3)' }, ticks: { color: '#64748b', font: { size: 10 } } }
-                }
-            }
-        });
-
-        // Khởi chạy WebSocket khi trang tải xong
-        window.addEventListener('DOMContentLoaded', () => {
-            initWebSocket();
-        });
-    </script>
-</body>
-</html>
+                            <div>
+                                <h3 class="text-xs font-bold text-white">Tạo video AI</h3>
+                                <p class="text-[11px] text-slate-400 mt-1">
