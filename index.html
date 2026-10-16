@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Test Client</title>
+</head>
+<body>
+    <h2>WebSocket Test Client</h2>
+    <input type="text" id="msgInput" placeholder="Nhập tin nhắn..." />
+    <button onclick="sendMessage()">Gửi</button>
+
+    <h3>Lịch sử tin nhắn:</h3>
+    <ul id="log"></ul>
+
+    <script>
+        // Kết nối tới WebSocket Server
+        const ws = new WebSocket('ws://localhost:8080');
+
+        ws.onopen = () => {
+            addLog('System', 'Đã kết nối thành công tới Server!');
+        };
+
+        ws.onmessage = (event) => {
+            addLog('Server/Client', event.data);
+        };
+
+        ws.onclose = () => {
+            addLog('System', 'Mất kết nối tới Server!');
+        };
+
+        function sendMessage() {
+            const input = document.getElementById('msgInput');
+            if (input.value && ws.readyState === WebSocket.OPEN) {
+                ws.send(input.value);
+                input.value = '';
+            }
+        }
+
+        function addLog(sender, text) {
+            const li = document.createElement('li');
+            li.textContent = `[${sender}]: ${text}`;
+            document.getElementById('log').appendChild(li);
+        }
+    </script>
+</body>
+</html>
