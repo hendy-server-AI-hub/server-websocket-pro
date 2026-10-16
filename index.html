@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hendy Video Studio v3.5 - Hoàn Thiện Trang Chủ & Xác Thực</title>
+    <title>Hendy Video Studio v4.0 - OAuth & Dark/Light Mode</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -18,8 +18,6 @@
                         cardHeader: '#1a2540',
                         accentBlue: '#3b82f6',
                         accentPurple: '#8b5cf6',
-                        neonPurple: '#a855f7',
-                        neonCyan: '#06b6d4',
                         goldVip: '#f59e0b'
                     }
                 }
@@ -37,8 +35,8 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #1e293b; }
         
         .banner-glow {
             background: linear-gradient(135deg, rgba(30, 27, 75, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%),
@@ -50,169 +48,157 @@
         .tab-content.active { display: block; }
     </style>
 </head>
-<body class="bg-[#090d16] text-slate-100 min-h-screen flex antialiased selection:bg-blue-600 selection:text-white overflow-hidden">
+<body class="bg-slate-100 dark:bg-[#090d16] text-slate-800 dark:text-slate-100 min-h-screen flex antialiased selection:bg-blue-600 selection:text-white overflow-hidden transition-colors duration-300">
 
     <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-3 pointer-events-none"></div>
 
-    <!-- MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ (AUTHENTICATION SCREEN) -->
+    <!-- MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ (AUTH SCREEN + OAUTH) -->
     <div id="authScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-2xl">
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
             <div class="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl"></div>
             <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"></div>
         </div>
-        <div class="relative bg-[#131c31] border border-slate-800 w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl backdrop-blur-2xl">
+        <div class="relative bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 w-full max-w-md rounded-3xl p-8 space-y-6 shadow-2xl backdrop-blur-2xl">
             <div class="text-center space-y-2">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 mx-auto flex items-center justify-center shadow-lg shadow-blue-500/30">
                     <i data-lucide="play" class="w-6 h-6 text-white fill-white"></i>
                 </div>
-                <h2 id="authTitle" class="text-lg font-extrabold text-white tracking-tight">Đăng Nhập Hendy Studio v3.5</h2>
-                <p id="authSubtitle" class="text-xs text-slate-400">Không gian sáng tạo video AI đẳng cấp chuyên nghiệp</p>
+                <h2 id="authTitle" class="text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">Đăng Nhập Hendy Studio v4.0</h2>
+                <p id="authSubtitle" class="text-xs text-slate-500 dark:text-slate-400">Không gian sáng tạo video AI đẳng cấp chuyên nghiệp</p>
+            </div>
+
+            <!-- Nút Đăng Nhập Bên Thứ 3 (OAuth) -->
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="handleThirdPartyLogin('Google')" class="flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i class="fab fa-google text-red-500"></i> Google
+                </button>
+                <button onclick="handleThirdPartyLogin('GitHub')" class="flex items-center justify-center gap-2 py-2.5 px-4 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i class="fab fa-github text-white"></i> GitHub
+                </button>
+            </div>
+
+            <div class="flex items-center my-2">
+                <div class="flex-1 border-t border-slate-200 dark:border-slate-800"></div>
+                <span class="px-3 text-[10px] text-slate-400 uppercase tracking-wider">Hoặc email truyền thống</span>
+                <div class="flex-1 border-t border-slate-200 dark:border-slate-800"></div>
             </div>
 
             <!-- Form Đăng Nhập -->
             <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="text-xs font-bold text-slate-300">Email hoặc Tên tài khoản:</label>
-                    <input type="text" id="loginEmail" required placeholder="vd: quanlinh@gmail.com" class="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl text-xs text-white mt-1.5 outline-none focus:border-blue-500">
+                    <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Email hoặc Tên tài khoản:</label>
+                    <input type="text" id="loginEmail" required placeholder="vd: quanlinh@gmail.com" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 px-4 py-3 rounded-xl text-xs text-slate-900 dark:text-white mt-1.5 outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-300">Mật khẩu bảo mật:</label>
-                    <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 px-4 py-3 rounded-xl text-xs text-white mt-1.5 outline-none focus:border-blue-500">
+                    <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Mật khẩu bảo mật:</label>
+                    <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 px-4 py-3 rounded-xl text-xs text-slate-900 dark:text-white mt-1.5 outline-none focus:border-blue-500">
                 </div>
                 <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-blue-600/30">
                     Đăng Nhập Hệ Thống
                 </button>
                 <div class="text-center pt-2">
-                    <p class="text-xs text-slate-400">Chưa có tài khoản? <button type="button" onclick="toggleAuthMode('register')" class="text-blue-400 font-bold hover:underline">Đăng ký ngay</button></p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Chưa có tài khoản? <button type="button" onclick="toggleAuthMode('register')" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">Đăng ký ngay</button></p>
                 </div>
             </form>
 
             <!-- Form Đăng Ký (Ẩn mặc định) -->
             <form id="registerForm" onsubmit="handleRegisterSubmit(event)" class="space-y-4 hidden">
                 <div>
-                    <label class="text-xs font-bold text-slate-300">Họ và tên:</label>
-                    <input type="text" id="regName" required placeholder="vd: Ngô Văn G" class="w-full bg-slate-950 border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-white mt-1 outline-none focus:border-blue-500">
+                    <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Họ và tên:</label>
+                    <input type="text" id="regName" required placeholder="vd: Ngô Văn G" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 px-4 py-2.5 rounded-xl text-xs text-slate-900 dark:text-white mt-1 outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-300">Email đăng ký:</label>
-                    <input type="email" id="regEmail" required placeholder="vd: email@domain.com" class="w-full bg-slate-950 border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-white mt-1 outline-none focus:border-blue-500">
+                    <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Email đăng ký:</label>
+                    <input type="email" id="regEmail" required placeholder="vd: email@domain.com" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 px-4 py-2.5 rounded-xl text-xs text-slate-900 dark:text-white mt-1 outline-none focus:border-blue-500">
                 </div>
                 <div>
-                    <label class="text-xs font-bold text-slate-300">Mật khẩu mới:</label>
-                    <input type="password" id="regPassword" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 px-4 py-2.5 rounded-xl text-xs text-white mt-1 outline-none focus:border-blue-500">
+                    <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Mật khẩu mới:</label>
+                    <input type="password" id="regPassword" required placeholder="••••••••" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 px-4 py-2.5 rounded-xl text-xs text-slate-900 dark:text-white mt-1 outline-none focus:border-blue-500">
                 </div>
                 <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-purple-600/30">
                     Đăng Ký & Kích Hoạt
                 </button>
                 <div class="text-center pt-2">
-                    <p class="text-xs text-slate-400">Đã có tài khoản? <button type="button" onclick="toggleAuthMode('login')" class="text-blue-400 font-bold hover:underline">Đăng nhập ngay</button></p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Đã có tài khoản? <button type="button" onclick="toggleAuthMode('login')" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">Đăng nhập ngay</button></p>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- SIDEBAR BÊN TRÁI -->
-    <aside class="w-64 bg-[#0d1322] border-r border-slate-800/80 flex flex-col shrink-0 h-screen">
-        <div class="p-5 flex items-center justify-between border-b border-slate-800/60">
+    <aside class="w-64 bg-white dark:bg-[#0d1322] border-r border-slate-200 dark:border-slate-800/80 flex flex-col shrink-0 h-screen transition-colors duration-300">
+        <div class="p-5 flex items-center justify-between border-b border-slate-200 dark:border-slate-800/60">
             <div class="flex items-center gap-2.5 cursor-pointer" onclick="switchNav('home')">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
                     <i data-lucide="play" class="w-5 h-5 text-white fill-white"></i>
                 </div>
                 <div>
-                    <h1 class="font-extrabold text-base tracking-tight text-white flex items-center gap-1.5">
-                        Hendy <span class="text-xs font-normal text-slate-400">Studio</span>
+                    <h1 class="font-extrabold text-base tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
+                        Hendy <span class="text-xs font-normal text-slate-500 dark:text-slate-400">Studio</span>
                     </h1>
                 </div>
             </div>
-            <span class="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded text-[10px] font-extrabold uppercase">v3.5 Pro</span>
+            <span class="px-2 py-0.5 bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-500/30 rounded text-[10px] font-extrabold uppercase">v4.0 Pro</span>
         </div>
 
         <nav class="flex-1 p-4 space-y-6 overflow-y-auto" id="sidebar-nav">
             <div>
-                <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Studio & Công Cụ Sáng Tạo</p>
+                <p class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Studio & Công Cụ Sáng Tạo</p>
                 <div class="space-y-1">
-                    <button onclick="switchNav('home')" data-nav="home" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30">
+                    <button onclick="switchNav('home')" data-nav="home" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
                         <i data-lucide="home" class="w-4 h-4"></i> Trang chủ
                     </button>
-                    <button onclick="switchNav('create-video')" data-nav="create-video" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <i data-lucide="plus-circle" class="w-4 h-4 text-purple-400"></i> Tạo video AI mới
+                    <button onclick="switchNav('create-video')" data-nav="create-video" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition">
+                        <i data-lucide="plus-circle" class="w-4 h-4 text-purple-500 dark:text-purple-400"></i> Tạo video AI mới
                     </button>
-                    <button onclick="switchNav('tts')" data-nav="tts" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <i data-lucide="mic" class="w-4 h-4 text-emerald-400"></i> Chuyển giọng nói AI
+                    <button onclick="switchNav('tts')" data-nav="tts" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition">
+                        <i data-lucide="mic" class="w-4 h-4 text-emerald-500 dark:text-emerald-400"></i> Chuyển giọng nói AI
                     </button>
-                    <button onclick="switchNav('subtitles')" data-nav="subtitles" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <i data-lucide="subtitles" class="w-4 h-4 text-rose-400"></i> Phụ đề tự động
+                    <button onclick="switchNav('subtitles')" data-nav="subtitles" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition">
+                        <i data-lucide="subtitles" class="w-4 h-4 text-rose-500 dark:text-rose-400"></i> Phụ đề tự động
                     </button>
-                    <button onclick="switchNav('editor')" data-nav="editor" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <i data-lucide="scissors" class="w-4 h-4 text-cyan-400"></i> Chỉnh sửa & Cắt ghép
+                    <button onclick="switchNav('editor')" data-nav="editor" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition">
+                        <i data-lucide="scissors" class="w-4 h-4 text-cyan-500 dark:text-cyan-400"></i> Chỉnh sửa & Cắt ghép
                     </button>
-                    <button onclick="switchNav('projects')" data-nav="projects" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
+                    <button onclick="switchNav('projects')" data-nav="projects" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition">
                         <i data-lucide="folder" class="w-4 h-4"></i> Dự án của tôi
                     </button>
-                    <button onclick="switchNav('export')" data-nav="export" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <i data-lucide="share-2" class="w-4 h-4 text-orange-400"></i> Xuất & Chia sẻ 4K
-                    </button>
-                    <button onclick="switchNav('history')" data-nav="history" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <i data-lucide="history" class="w-4 h-4"></i> Lịch sử hoạt động
-                    </button>
-                </div>
-            </div>
-
-            <div>
-                <p class="px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Tài Khoản & Dịch Vụ</p>
-                <div class="space-y-1">
-                    <button onclick="switchNav('packages')" data-nav="packages" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 transition">
-                        <i data-lucide="package" class="w-4 h-4 text-amber-400"></i> Gói dịch vụ VIP
+                    <button onclick="switchNav('export')" data-nav="export" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition">
+                        <i data-lucide="share-2" class="w-4 h-4 text-orange-500 dark:text-orange-400"></i> Xuất & Chia sẻ 4K
                     </button>
                 </div>
             </div>
         </nav>
-
-        <!-- VIP Pro Nâng Cấp Card -->
-        <div class="p-4 border-t border-slate-800/60">
-            <div class="bg-gradient-to-b from-amber-500/10 to-transparent border border-amber-500/20 rounded-2xl p-4 text-center space-y-3 relative overflow-hidden">
-                <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
-                    <i data-lucide="crown" class="w-4 h-4"></i>
-                </div>
-                <div>
-                    <h4 class="text-xs font-extrabold text-white">Nâng cấp lên VIP Pro</h4>
-                    <p class="text-[11px] text-slate-400 mt-1">Mở khóa toàn bộ GPU Render & Voice Clone.</p>
-                </div>
-                <button onclick="switchNav('packages')" class="w-full py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 hover:brightness-110 transition">
-                    Nâng cấp ngay <i data-lucide="arrow-right" class="w-3.5 h-3.5 inline"></i>
-                </button>
-            </div>
-        </div>
     </aside>
 
     <!-- KHU VỰC NỘI DUNG CHÍNH -->
     <main class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
         <!-- HEADER TOP BAR -->
-        <header class="h-16 border-b border-slate-800/80 px-8 flex items-center justify-between bg-[#090d16]/90 backdrop-blur-md sticky top-0 z-30 shrink-0">
+        <header class="h-16 border-b border-slate-200 dark:border-slate-800/80 px-8 flex items-center justify-between bg-white/90 dark:bg-[#090d16]/90 backdrop-blur-md sticky top-0 z-30 shrink-0 transition-colors duration-300">
             <div class="relative w-96">
-                <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                <input type="text" placeholder="Tìm kiếm nhanh dự án, công cụ..." class="w-full bg-[#131c31] border border-slate-800 pl-10 pr-16 py-2 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition">
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-500 bg-slate-800/60 px-1.5 py-0.5 rounded">Ctrl + K</span>
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                <input type="text" placeholder="Tìm kiếm nhanh..." class="w-full bg-slate-100 dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 pl-10 pr-16 py-2 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 transition">
             </div>
 
-            <div class="flex items-center gap-4">
-                <button onclick="openAiChatModal()" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-600/20 text-indigo-300 border border-indigo-500/40 rounded-xl text-xs font-bold hover:bg-indigo-600/30 transition">
-                    <i data-lucide="bot" class="w-4 h-4 text-indigo-400"></i> Trợ lý AI
-                </button>
-                <button onclick="showToast('Bạn không có thông báo mới', 'info')" class="relative p-2 text-slate-400 hover:text-white rounded-xl bg-[#131c31] border border-slate-800">
-                    <i data-lucide="bell" class="w-4 h-4"></i>
-                    <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500"></span>
+            <div class="flex items-center gap-3">
+                <!-- Nút Đổi Giao Diện Sáng / Tối (Theme Toggle) -->
+                <button onclick="toggleThemeMode()" class="p-2 rounded-xl bg-slate-100 dark:bg-[#131c31] text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 transition" title="Chuyển đổi Sáng / Tối">
+                    <i id="themeIcon" data-lucide="sun" class="w-4 h-4"></i>
                 </button>
 
-                <!-- Profile hiển thị thông tin user đang đăng nhập & Nút Đăng Xuất -->
-                <div class="flex items-center gap-3 pl-2 border-l border-slate-800">
+                <button onclick="openAiChatModal()" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-600/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/40 rounded-xl text-xs font-bold hover:bg-indigo-100 transition">
+                    <i data-lucide="bot" class="w-4 h-4"></i> Trợ lý AI
+                </button>
+
+                <!-- Profile User & Đăng Xuất -->
+                <div class="flex items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-800">
                     <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-xs text-white" id="userAvatarText">LG</div>
                     <div class="text-left hidden sm:block">
-                        <p class="text-xs font-bold text-white leading-none" id="userNameDisplay">QUAN LINH</p>
-                        <span class="text-[10px] text-emerald-400">VIP Pro Active</span>
+                        <p class="text-xs font-bold text-slate-900 dark:text-white leading-none" id="userNameDisplay">QUAN LINH</p>
+                        <span class="text-[10px] text-emerald-500 dark:text-emerald-400">Pro Active</span>
                     </div>
-                    <button onclick="handleLogout()" title="Đăng xuất" class="p-1.5 ml-2 bg-slate-800 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 rounded-xl transition">
+                    <button onclick="handleLogout()" title="Đăng xuất" class="p-1.5 ml-2 bg-slate-100 dark:bg-slate-800 hover:bg-rose-500/20 text-slate-500 hover:text-rose-500 rounded-xl transition">
                         <i data-lucide="log-out" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -222,45 +208,284 @@
         <!-- TAB CONTENT CONTAINER -->
         <div class="p-8 space-y-8 flex-1">
 
-            <!-- TAB 1: TRANG CHỦ HOÀN THIỆN -->
+            <!-- TAB 1: TRANG CHỦ -->
             <section id="tab-home" class="tab-content active space-y-8">
-                <!-- HERO BANNER -->
-                <div class="relative rounded-3xl overflow-hidden border border-slate-800/80 p-8 banner-glow flex flex-col justify-between min-h-[240px]">
+                <div class="relative rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800/80 p-8 banner-glow flex flex-col justify-between min-h-[240px]">
                     <div class="relative z-10 max-w-2xl space-y-3">
-                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold">
-                            <i data-lucide="crown" class="w-3.5 h-3.5"></i> Hendy Video Studio v3.5 Pro
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 dark:text-amber-400 text-xs font-bold">
+                            <i data-lucide="crown" class="w-3.5 h-3.5"></i> Hendy Studio v4.0 Pro
                         </div>
                         <h2 class="text-3xl font-extrabold text-white tracking-tight">Sáng Tạo Video Đỉnh Cao Cùng AI</h2>
-                        <p class="text-xs text-slate-300 flex items-center gap-2 font-medium">
+                        <p class="text-xs text-slate-200 flex items-center gap-2 font-medium">
                             <span>Tự động hóa kịch bản</span> • <span>Lồng tiếng thông minh</span> • <span>Xuất bản 4K tốc độ cao</span>
                         </p>
                         <div class="pt-2 flex gap-3">
-                            <button onclick="switchNav('create-video')" class="px-6 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-500/25 transition flex items-center gap-2">
+                            <button onclick="switchNav('create-video')" class="px-6 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:brightness-110 text-white rounded-xl text-xs font-bold shadow-lg transition flex items-center gap-2">
                                 <i data-lucide="plus-circle" class="w-4 h-4"></i> Tạo video mới ngay
                             </button>
-                            <button onclick="switchNav('projects')" class="px-5 py-3 bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition">
-                                Quản lý dự án
-                            </button>
-                        </div>
-                    </div>
-                    <div class="absolute top-6 right-6 bg-[#131c31]/90 border border-slate-700/60 p-4 rounded-2xl flex items-center gap-3 backdrop-blur-md">
-                        <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
-                            <i data-lucide="crown" class="w-5 h-5"></i>
-                        </div>
-                        <div>
-                            <h4 class="text-xs font-extrabold text-white">Phiên bản v3.5 Pro</h4>
-                            <p class="text-[10px] text-slate-400">Đầy đủ tính năng • Không giới hạn</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- 5 CÔNG CỤ TẮT TRANG CHỦ -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div onclick="switchNav('create-video')" class="bg-[#131c31] border border-slate-800/80 p-5 rounded-2xl hover:border-blue-500/40 transition group cursor-pointer flex flex-col justify-between">
-                        <div class="space-y-3">
-                            <div class="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center group-hover:scale-110 transition">
-                                <i data-lucide="video" class="w-5 h-5"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-xs font-bold text-white">Tạo video AI</h3>
-                                <p class="text-[11px] text-slate-400 mt-1">
+                    <div onclick="switchNav('create-video')" class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 p-5 rounded-2xl hover:border-blue-500 transition cursor-pointer shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center mb-3">
+                            <i data-lucide="video" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Tạo video AI</h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Từ văn bản và kịch bản</p>
+                    </div>
+                    <div onclick="switchNav('tts')" class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 p-5 rounded-2xl hover:border-blue-500 transition cursor-pointer shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-3">
+                            <i data-lucide="mic" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Chuyển giọng nói</h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">AI Voice tự nhiên</p>
+                    </div>
+                    <div onclick="switchNav('subtitles')" class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 p-5 rounded-2xl hover:border-blue-500 transition cursor-pointer shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center mb-3">
+                            <i data-lucide="subtitles" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Phụ đề tự động</h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Trích xuất SRT nhanh</p>
+                    </div>
+                    <div onclick="switchNav('editor')" class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 p-5 rounded-2xl hover:border-blue-500 transition cursor-pointer shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center mb-3">
+                            <i data-lucide="scissors" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Cắt ghép video</h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Hiệu ứng chuyên nghiệp</p>
+                    </div>
+                    <div onclick="switchNav('export')" class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 p-5 rounded-2xl hover:border-blue-500 transition cursor-pointer shadow-sm">
+                        <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center mb-3">
+                            <i data-lucide="share-2" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Xuất 4K</h3>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Tối ưu nền tảng</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: TẠO VIDEO AI -->
+            <section id="tab-create-video" class="tab-content space-y-6">
+                <div class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-6 shadow-sm">
+                    <h2 class="text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-purple-500"></i> Tạo Video AI Tự Động</h2>
+                    <form onsubmit="handleGenerateAiVideo(event)" class="space-y-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Tên dự án:</label>
+                            <input type="text" id="aiVideoTitle" required placeholder="vd: Review Sản Phẩm" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 p-3 rounded-xl text-xs text-slate-900 dark:text-white mt-1.5 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-300">Prompt Kịch Bản AI:</label>
+                            <textarea id="aiVideoPrompt" rows="4" required placeholder="Nhập mô tả kịch bản..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 p-3 rounded-xl text-xs text-slate-900 dark:text-white mt-1.5 outline-none"></textarea>
+                        </div>
+                        <button type="submit" class="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold transition">Bắt đầu render</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- CÁC TAB KHÁC (TTS, Subtitles, Editor, Projects, Export) -->
+            <section id="tab-tts" class="tab-content space-y-6">
+                <div class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-6 shadow-sm">
+                    <h2 class="text-base font-extrabold text-slate-900 dark:text-white">Chuyển Giọng Nói AI (TTS)</h2>
+                    <textarea rows="4" placeholder="Nhập văn bản cần đọc..." class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 rounded-xl text-xs text-slate-900 dark:text-white outline-none"></textarea>
+                    <button onclick="showToast('Đã tạo audio thành công!', 'success')" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">Tạo Giọng Đọc</button>
+                </div>
+            </section>
+
+            <section id="tab-subtitles" class="tab-content space-y-6">
+                <div class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-6 shadow-sm">
+                    <h2 class="text-base font-extrabold text-slate-900 dark:text-white">Phụ Đề Tự Động</h2>
+                    <input type="file" class="w-full text-xs text-slate-500 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
+                </div>
+            </section>
+
+            <section id="tab-editor" class="tab-content space-y-6">
+                <div class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-6 shadow-sm">
+                    <h2 class="text-base font-extrabold text-slate-900 dark:text-white">Trình Chỉnh Sửa Video</h2>
+                    <video controls class="w-full max-h-[300px] bg-black rounded-xl">
+                        <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                    </video>
+                </div>
+            </section>
+
+            <section id="tab-projects" class="tab-content space-y-6">
+                <div class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-6 shadow-sm">
+                    <h2 class="text-base font-extrabold text-slate-900 dark:text-white">Dự Án Của Tôi</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="allProjectsGrid"></div>
+                </div>
+            </section>
+
+            <section id="tab-export" class="tab-content space-y-6">
+                <div class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-6 shadow-sm">
+                    <h2 class="text-base font-extrabold text-slate-900 dark:text-white">Xuất & Chia Sẻ 4K</h2>
+                    <button onclick="showToast('Đã xuất file 4K thành công!', 'success')" class="px-4 py-2 bg-orange-600 text-white rounded-xl text-xs font-bold">Xuất Bản Ngay</button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- MODAL AI CHATBOT -->
+    <div id="aiChatModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md hidden">
+        <div class="bg-white dark:bg-[#131c31] border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-2xl p-6 space-y-4 shadow-2xl flex flex-col h-[400px]">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <h3 class="font-extrabold text-slate-900 dark:text-white text-xs flex items-center gap-2"><i data-lucide="bot" class="w-4 h-4 text-indigo-500"></i> Trợ Lý AI Studio</h3>
+                <button onclick="closeModal('aiChatModal')" class="text-slate-400 hover:text-slate-700 dark:hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <div class="flex-1 overflow-y-auto space-y-3 p-2 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-indigo-600 dark:text-indigo-200">
+                Xin chào! Tôi có thể giúp gì cho kịch bản của bạn?
+            </div>
+            <form onsubmit="handleSendAiMessage(event)" class="flex gap-2">
+                <input type="text" id="aiChatInput" required placeholder="Nhập câu hỏi..." class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3 py-2 rounded-xl text-xs text-slate-900 dark:text-white outline-none">
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold">Gửi</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT XỬ LÝ -->
+    <script>
+        lucide.createIcons();
+
+        // --- THEME TOGGLE (SÁNG / TỐI) ---
+        function toggleThemeMode() {
+            const html = document.documentElement;
+            const isDark = html.classList.toggle('dark');
+            localStorage.setItem('hendy_theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeIcon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+            lucide.createIcons();
+            showToast(`Đã chuyển sang giao diện ${isDark ? 'Tối' : 'Sáng'}`, 'info');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('hendy_theme') || 'dark';
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').setAttribute('data-lucide', 'moon');
+            } else {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').setAttribute('data-lucide', 'sun');
+            }
+            lucide.createIcons();
+            initUserSession();
+            renderProjects();
+        });
+
+        // --- AUTHENTICATION & OAUTH THỨ 3 ---
+        function toggleAuthMode(mode) {
+            if(mode === 'register') {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('registerForm').classList.remove('hidden');
+                document.getElementById('authTitle').innerText = 'Đăng Ký Tài Khoản Mới';
+            } else {
+                document.getElementById('registerForm').classList.add('hidden');
+                document.getElementById('loginForm').classList.remove('hidden');
+                document.getElementById('authTitle').innerText = 'Đăng Nhập Hendy Studio v4.0';
+            }
+        }
+
+        function handleThirdPartyLogin(provider) {
+            const mockUser = { name: `${provider} User`, email: `user@${provider.toLowerCase()}.com` };
+            localStorage.setItem('hendy_user_logged', JSON.stringify(mockUser));
+            document.getElementById('authScreen').style.display = 'none';
+            initUserSession();
+            showToast(`Đăng nhập thành công qua ${provider}!`, 'success');
+        }
+
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            localStorage.setItem('hendy_user_logged', JSON.stringify({ name: email.split('@')[0].toUpperCase(), email }));
+            document.getElementById('authScreen').style.display = 'none';
+            initUserSession();
+            showToast('Đăng nhập thành công!', 'success');
+        }
+
+        function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            localStorage.setItem('hendy_user_logged', JSON.stringify({ name, email }));
+            document.getElementById('authScreen').style.display = 'none';
+            initUserSession();
+            showToast('Đăng ký thành công!', 'success');
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('hendy_user_logged');
+            document.getElementById('authScreen').style.display = 'flex';
+            showToast('Đã đăng xuất.', 'warning');
+        }
+
+        function initUserSession() {
+            const raw = localStorage.getItem('hendy_user_logged');
+            if(raw) {
+                const user = JSON.parse(raw);
+                document.getElementById('userNameDisplay').innerText = user.name;
+                document.getElementById('userAvatarText').innerText = user.name.slice(0, 2).toUpperCase();
+                document.getElementById('authScreen').style.display = 'none';
+            } else {
+                document.getElementById('authScreen').style.display = 'flex';
+            }
+        }
+
+        // --- SPA NAVIGATION & PROJECTS ---
+        function switchNav(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('tab-' + tabId);
+            if(target) target.classList.add('active');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if(btn.getAttribute('data-nav') === tabId) {
+                    btn.className = "nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30";
+                } else {
+                    btn.className = "nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/50 transition";
+                }
+            });
+        }
+
+        function getProjects() {
+            return JSON.parse(localStorage.getItem('hendy_v4_projects') || JSON.stringify([
+                { id: 1, title: 'Video_Review_SanPham', date: '16/11/2025', status: 'Hoàn thành', thumb: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?q=80&w=200&auto=format&fit=crop' }
+            ]));
+        }
+
+        function renderProjects() {
+            const gridBox = document.getElementById('allProjectsGrid');
+            if(gridBox) {
+                gridBox.innerHTML = getProjects().map(p => `
+                    <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden p-3 space-y-3">
+                        <img src="${p.thumb}" class="w-full h-32 object-cover rounded-xl" alt="Cover">
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-white">${p.title}</h4>
+                        <p class="text-[10px] text-slate-500">${p.date}</p>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function handleGenerateAiVideo(e) {
+            e.preventDefault();
+            const title = document.getElementById('aiVideoTitle').value;
+            const projects = getProjects();
+            projects.unshift({ id: Date.now(), title, date: 'Vừa xong', status: 'Hoàn thành', thumb: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200&auto=format&fit=crop' });
+            localStorage.setItem('hendy_v4_projects', JSON.stringify(projects));
+            renderProjects();
+            showToast(`Đã tạo video "${title}" thành công!`, 'success');
+            switchNav('projects');
+        }
+
+        function openAiChatModal() { document.getElementById('aiChatModal').classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function handleSendAiMessage(e) { e.preventDefault(); showToast('AI đã ghi nhận câu hỏi!', 'info'); closeModal('aiChatModal'); }
+
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            el.className = `p-3.5 rounded-xl border ${type==='success'?'border-emerald-500/30 bg-emerald-950/90 text-emerald-300':'border-blue-500/30 bg-blue-950/90 text-blue-300'} text-xs font-bold shadow-2xl pointer-events-auto`;
+            el.innerHTML = msg;
+            container.appendChild(el);
+            setTimeout(() => el.remove(), 3500);
+        }
+    </script>
+</body>
+</html>
