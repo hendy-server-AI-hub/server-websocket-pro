@@ -1,0 +1,57 @@
+{
+  "name": "hendy-vietsub-pro",
+  "version": "2.9.0-rc.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "sync": "node scripts/auto-sync-workspaces.js",
+    "build": "node scripts/auto-sync-workspaces.js && node scripts/generate-icons.js && vite build",
+    "render-build": "npm ci && npm run build",
+    "start": "tsx server.ts",
+    "lint": "tsc --noEmit",
+    "generate:icons": "node scripts/generate-icons.js",
+    "deploy:pages": "wrangler pages deploy dist --project-name=hendy-vietsub-pro",
+    "dev:admin": "vite --open /apps/admin-web/index.html",
+    "dev:studio": "vite --open /apps/studio-web/index.html",
+    "preview:admin": "vite preview --open /admin.html",
+    "preview:studio": "vite preview --open /studio.html",
+    "check:cloudflare": "node --check services/cloudflare-control-api/worker/index.mjs && node --check services/api-gateway/cloudflareAccessMiddleware.mjs && node --check apps/cloudflare-console/public/app.js && node --test services/cloudflare-control-api/test/*.test.js services/api-gateway/cloudflareAccessMiddleware.test.mjs",
+    "test:cloudflare": "node --test services/cloudflare-control-api/test/*.test.js",
+    "dev:cloudflare": "npx --yes wrangler@4.149.0 dev --config services/cloudflare-control-api/wrangler.jsonc",
+    "deploy:cloudflare:dry-run": "npx --yes wrangler@4.149.0 deploy --config services/cloudflare-control-api/wrangler.jsonc --dry-run",
+    "deploy:cloudflare:control-api": "npx --yes wrangler@4.149.0 deploy --config services/cloudflare-control-api/wrangler.jsonc",
+    "test": "npm run check:cloudflare",
+    "build:pages": "node scripts/build-pages.mjs"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@google/genai": "^0.2.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "lucide-react": "^0.344.0",
+    "multer": "^1.4.5-lts.1",
+    "postcss": "^8.4.47",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.13",
+    "tsx": "^4.19.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.6",
+    "vite-plugin-pwa": "^1.3.0",
+    "wavesurfer.js": "^7.7.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/multer": "^1.4.11",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0"
+  }
+}

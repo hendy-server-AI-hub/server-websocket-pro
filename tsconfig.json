@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@hendy-admini": ["hendy-Admini/index.ts"],
+      "@hendy-admini/*": ["hendy-Admini/*"],
+      "@studio-web": ["studio-web/index.ts"],
+      "@studio-web/*": ["studio-web/*"],
+      "@admin-web": ["admin-web/index.ts"],
+      "@admin-web/*": ["admin-web/*"]
+    }
+  },
+  "include": ["src", "hendy-Admini", "studio-web", "admin-web", "server.ts"]
+}

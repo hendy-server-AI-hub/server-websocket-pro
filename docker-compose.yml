@@ -1,0 +1,193 @@
+# =============================================================================
+# HENDY STUDIO VIETSUB PRO & TELEGRAM CYBERTECH 2026
+# Detailed Multi-Service Docker Compose Configuration
+# Integrating PostgreSQL 16 + Kotlin Ktor Backend Server + Vietsub Studio Web
+# + Telegram Bot Hendy Cybertech (ADMIN_ID: 6138197737) + Redis Cache
+# =============================================================================
+
+name: hendy-studio-vietsub-pro
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. POSTGRESQL 16 RELATIONAL DATABASE
+  # Stores Telegram Bot Users, Kho Acc (SC88..KJC_CU, ABCVIP), Transactions,
+  # Vietsub Pipeline Jobs, and Ktor Client Trigger Audit Logs
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: hendy_vietsub_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hendy_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hendy_secure_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-hendy_vietsub_db}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: Asia/Ho_Chi_Minh
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "effective_cache_size=768MB"
+      - "-c"
+      - "work_mem=8MB"
+      - "-c"
+      - "log_statement=ddl"
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/db-migrations/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - hendy_cybertech_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-hendy_admin} -d $${POSTGRES_DB:-hendy_vietsub_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # 2. KTOR BACKEND SERVER (Kotlin 2.1 + Ktor 3.6 Netty + FFmpeg Hardsub)
+  # Handles /telegram/webhook, /api/bot-trigger (ComposeWeb-TMA-KtorClient),
+  # /api/pipeline/dry-run, /api/render, /ws/events, and PostgreSQL persistence
+  # ---------------------------------------------------------------------------
+  ktor-backend:
+    build:
+      context: ./integrated-pipeline
+      dockerfile: Dockerfile
+    container_name: hendy_ktor_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      PORT: "8080"
+      PUBLIC_BASE_URL: ${KTOR_PUBLIC_URL:-http://localhost:8080}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,https://ngogiaidy56-eng.github.io,https://telegram-mini-app.ngogiaidy56.workers.dev}
+      # PostgreSQL JDBC & R2DBC Connection
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-hendy_vietsub_db}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: ${POSTGRES_DB:-hendy_vietsub_db}
+      POSTGRES_USER: ${POSTGRES_USER:-hendy_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hendy_secure_2026}
+      # Redis Session & Event Stream Broker
+      REDIS_URL: redis://redis:6379
+      # Telegram Bot Hendy Cybertech 2026 Configuration
+      TELEGRAM_BOT_TOKEN: ${BOT_TOKEN:-8517026315:AAELCCiSvwQb-9AWi0VRRMQvT7Pf6rAZzP8}
+      TELEGRAM_ADMIN_IDS: ${ADMIN_ID:-6138197737}
+      TELEGRAM_WEBHOOK_URL: ${TELEGRAM_WEBHOOK_URL:-https://telegram-mini-app.ngogiaidy56.workers.dev/api/telegram/webhook}
+      TELEGRAM_REGISTER_WEBHOOK: ${TELEGRAM_REGISTER_WEBHOOK:-false}
+      MINI_APP_URL: ${MINI_APP_URL:-https://ngogiaidy56-eng.github.io/BOT-TELE}
+      WEB_APP_URL: ${WEB_APP_URL:-https://telegram-mini-app.ngogiaidy56.workers.dev}
+      CORE_BACKEND_URL: ${CORE_BACKEND_URL:-http://vietsub-studio-web:3000}
+      # AI & Media Pipeline Engines
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_TRANSCRIPTION_MODEL: ${OPENAI_TRANSCRIPTION_MODEL:-whisper-1}
+      FFMPEG_BIN: /usr/bin/ffmpeg
+      WORK_DIR: /app/server/data
+      EDGE_SHARED_SECRET: ${EDGE_SHARED_SECRET:-hendy_edge_secret_2026}
+    ports:
+      - "${KTOR_PORT:-8080}:8080"
+    volumes:
+      - ktor_pipeline_data:/app/server/data
+      - ffmpeg_render_cache:/tmp/vietsub-renders
+    networks:
+      - hendy_cybertech_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+
+  # ---------------------------------------------------------------------------
+  # 3. VIETSUB STUDIO WEB & NODE.JS CORE GATEWAY (Express + Vite + Gemini + Bot)
+  # Serves the Rebuilt Vietsub Studio UI, Auto-Sync Audio Engine, 5s Preview
+  # Export, Telegram Bot Hendy Cybertech Webhook, and Ktor Client Bridge
+  # ---------------------------------------------------------------------------
+  vietsub-studio-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hendy_vietsub_studio_web
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ktor-backend:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      # Database & Ktor Upstream
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hendy_admin}:${POSTGRES_PASSWORD:-hendy_secure_2026}@postgres:5432/${POSTGRES_DB:-hendy_vietsub_db}
+      KTOR_BACKEND_URL: http://ktor-backend:8080
+      REDIS_URL: redis://redis:6379
+      # Telegram Bot Hendy Cybertech 2026
+      ADMIN_ID: ${ADMIN_ID:-6138197737}
+      BOT_TOKEN: ${BOT_TOKEN:-8517026315:AAELCCiSvwQb-9AWi0VRRMQvT7Pf6rAZzP8}
+      MINI_APP_URL: ${MINI_APP_URL:-https://ngogiaidy56-eng.github.io/BOT-TELE}
+      WEB_APP_URL: ${WEB_APP_URL:-https://telegram-mini-app.ngogiaidy56.workers.dev}
+      CORE_BACKEND_URL: ${CORE_BACKEND_URL:-https://telegram-mini-app.ngogiaidy56.workers.dev}
+      # AI & Cloudflare Workers AI Keys
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID:-}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    volumes:
+      - ffmpeg_render_cache:/tmp/vietsub-renders
+    networks:
+      - hendy_cybertech_net
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ---------------------------------------------------------------------------
+  # 4. REDIS 7.2 CACHE & OTP / SESSION STATE STORE
+  # Caches TTS Voiceover WAVs, 6-char Pipeline OTP codes, and Bot userStates
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7.2-alpine
+    container_name: hendy_vietsub_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - hendy_cybertech_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  ktor_pipeline_data:
+    driver: local
+  ffmpeg_render_cache:
+    driver: local
+
+networks:
+  hendy_cybertech_net:
+    driver: bridge
+    name: hendy_cybertech_net
